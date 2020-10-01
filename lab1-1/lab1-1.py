@@ -2,45 +2,46 @@ import cv2
 import numpy as np
 
 def splitRGB(img):
-    # TODO
+	B_map, G_map, R_map= cv2.split(img)
 
-    return R_map, G_map, B_map
+	return R_map, G_map, B_map
 
 def splitHSV(img):
-    # TODO
+	hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    return H_map, S_map, V_map
+	H_map, S_map, V_map = cv2.split(hsv_img)
+
+	return H_map, S_map, V_map
 
 def resize(img, size):
-    # TODO
 
-    return img_t
+	return img_t
 
 class MotionDetect(object):
-    """docstring for MotionDetect"""
-    def __init__(self, shape):
-        super(MotionDetect, self).__init__()
+	"""docstring for MotionDetect"""
+	def __init__(self, shape):
+		super(MotionDetect, self).__init__()
 
-        self.shape = shape
-        self.avg_map = np.zeros((self.shape[0], self.shape[1]), dtype='float')
-        self.alpha = 0.8 # you can ajust your value
-        self.threshold = 40 # you can ajust your value
+		self.shape = shape
+		self.avg_map = np.zeros((self.shape[0], self.shape[1]), dtype='float')
+		self.alpha = 0.8 # you can ajust your value
+		self.threshold = 40 # you can ajust your value
 
-        print("MotionDetect init with shape {}".format(self.shape))
+		print("MotionDetect init with shape {}".format(self.shape))
 
-    def getMotion(self, img):
-        assert img.shape == self.shape, "Input image shape must be {}, but get {}".format(self.shape, img.shape)
+	def getMotion(self, img):
+		assert img.shape == self.shape, "Input image shape must be {}, but get {}".format(self.shape, img.shape)
 
-        # Extract motion part (hint: motion part mask = difference between image and avg > threshold)
-        # TODO
+		# Extract motion part (hint: motion part mask = difference between image and avg > threshold)
+		# TODO
 
-        # Mask out unmotion part (hint: set the unmotion part to 0 with mask)
-        # TODO
+		# Mask out unmotion part (hint: set the unmotion part to 0 with mask)
+		# TODO
 
-        # Update avg_map
-        # TODO
+		# Update avg_map
+		# TODO
 
-        return motion_map
+		return motion_map
 
 
 # ------------------ #
@@ -49,19 +50,22 @@ class MotionDetect(object):
 name = "../data.png"
 img = cv2.imread(name)
 if img is not None:
-    print("Reading {} success. Image shape {}".format(name, img.shape))
+	print("Reading {} success. Image shape {}".format(name, img.shape))
 else:
-    print("Faild to read {}.".format(name))
+	print("Faild to read {}.".format(name))
+
+zero_channel = np.zeros(img.shape[:2], dtype = "uint8")
 
 R_map, G_map, B_map = splitRGB(img)
 H_map, S_map, V_map = splitHSV(img)
 
-cv2.imwrite('data_R.png', R_map)
-cv2.imwrite('data_G.png', G_map)
-cv2.imwrite('data_B.png', B_map)
-cv2.imwrite('data_H.png', H_map)
-cv2.imwrite('data_S.png', S_map)
-cv2.imwrite('data_V.png', V_map)
+
+cv2.imwrite('data_R.png', cv2.merge([zero_channel, zero_channel, R_map]))
+cv2.imwrite('data_G.png', cv2.merge([zero_channel, G_map, zero_channel]))
+cv2.imwrite('data_B.png', cv2.merge([B_map, zero_channel, zero_channel]))
+cv2.imwrite('data_H.png', cv2.merge([H_map, zero_channel, zero_channel]))
+cv2.imwrite('data_S.png', cv2.merge([zero_channel, S_map, zero_channel]))
+cv2.imwrite('data_V.png', cv2.merge([zero_channel, zero_channel, V_map]))
 
 
 # ------------------ #
@@ -70,9 +74,9 @@ cv2.imwrite('data_V.png', V_map)
 name = "../data.png"
 img = cv2.imread(name)
 if img is not None:
-    print("Reading {} success. Image shape {}".format(name, img.shape))
+	print("Reading {} success. Image shape {}".format(name, img.shape))
 else:
-    print("Faild to read {}.".format(name))
+	print("Faild to read {}.".format(name))
 
 height, width, channel = img.shape
 img_big = resize(img, 2)
@@ -104,16 +108,16 @@ mt = MotionDetect(shape=(h,w,3))
 
 # Read video frame by frame
 while True:
-    # Get 1 frame
-    success, frame = cap.read()
+	# Get 1 frame
+	success, frame = cap.read()
 
-    if success:
-        motion_map = mt.getMotion(frame)
+	if success:
+		motion_map = mt.getMotion(frame)
 
-        # Write 1 frame to output video
-        out.write(motion_map)
-    else:
-        break
+		# Write 1 frame to output video
+		out.write(motion_map)
+	else:
+		break
 
 # Release resource
 cap.release()
