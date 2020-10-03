@@ -5,9 +5,14 @@ import matplotlib.pyplot as plt
 def gammaCorrection(img, gamma=1.0):
     # Build a lookup table mapping the pixel values [0, 255] to their adjusted gamma values
     # TODO
-
+    invGamma = 1.0 / gamma
+    table = np.zeros( 256, np.uint8 )
+    for i in range(0, 256):
+        norm_val = float(i)/255.0
+        table[i] = int( 255.0 * ( norm_val ** invGamma ) )
     # Apply gamma correction using the lookup table
     # TODO
+    img_g = cv2.LUT(img, table)
 
     return img_g
 
