@@ -50,10 +50,36 @@ def midFilter(img):
    
     return img_mid
 
-def edgeSharpen(img):
+def unsharp_mask(image, kernel_size=(3, 3), sigma=1.0, amount=1.0, threshold=0):
+    """Return a sharpened version of the image, using an unsharp mask."""
+    blurred = cv2.GaussianBlur(image, kernel_size, sigma)
+    sharpened = float(amount + 1) * image - float(amount) * blurred
+    sharpened = np.maximum(sharpened, np.zeros(sharpened.shape))
+    sharpened = np.minimum(sharpened, 255 * np.ones(sharpened.shape))
+    sharpened = sharpened.round().astype(np.uint8)
+    if threshold > 0:
+        low_contrast_mask = np.absolute(image - blurred) < threshold
+        np.copyto(sharpened, image, where=low_contrast_mask)
+    return sharpened
+
+def edgeSharpen(img, amount = 1):
     # TODO
-    
-    return img_edge, img_s
+    if len(img.shape) > 2 :
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = img
+
+    denoise = cv2.GaussianBlur(gray,(3,3),0)
+    kernel = np.array([[0,1,0], [1,-4,1], [0,1,0]])
+    pedding = cv2.copyMakeBorder(img,1,1,1,1,cv2.BORDER_REPLICATE)
+    img_edge = cv2.filter2D(pedding,-1,kernel = kernel)
+
+    denoise = cv2.GaussianBlur(gray,(3,3),0)
+    kernel_delta = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    pedding_delta = cv2.copyMakeBorder(img_edge,1,1,1,1,cv2.BORDER_REPLICATE)
+    img_delta = cv2.filter2D(pedding,-1,kernel = kernel_delta)
+
+    return img_edge, img_delta, unsharp_mask(img_edge)
 
 # ------------------ #
 #       Denoise      #
@@ -80,6 +106,7 @@ cv2.imwrite('img_gau_mid.png', img_gau_mid)
 name = '../mj.tif'
 img = cv2.imread(name, 0)
 
-img_edge, img_s = edgeSharpen(img)
+img_edge, img_s, img_ums = edgeSharpen(img)
 cv2.imwrite('mj_edge.png', img_edge)
 cv2.imwrite('mj_sharpen.png', img_s)
+cv2.imwrite('mj_ums.png', img_ums)
