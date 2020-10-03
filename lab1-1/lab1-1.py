@@ -61,7 +61,7 @@ class MotionDetect(object):
 		super(MotionDetect, self).__init__()
 
 		self.shape = shape
-		self.avg_map = np.zeros((self.shape[0], self.shape[1]), dtype='float')
+		self.avg_map = np.zeros((self.shape[0], self.shape[1], self.shape[2]),  np.uint8)
 		self.alpha = 0.8 # you can ajust your value
 		self.threshold = 40 # you can ajust your value
 
@@ -71,15 +71,25 @@ class MotionDetect(object):
 		assert img.shape == self.shape, "Input image shape must be {}, but get {}".format(self.shape, img.shape)
 
 		# Extract motion part (hint: motion part mask = difference between image and avg > threshold)
-		# TODO
+		moving = cv2.absdiff(self.avg_map.astype(np.uint8), img.astype(np.uint8))
 
 		# Mask out unmotion part (hint: set the unmotion part to 0 with mask)
-		# TODO
+		moving_map = np.zeros((img.shape[0], img.shape[1], img.shape[2]), np.uint8)
 
+		height = img.shape[0]
+		width = img.shape[1]
+
+		for i in range(0, height):
+			for j in range(0, width):
+				if moving[i, j].sum() < self.threshold:
+					moving_map[i, j] = [0, 0, 0]
+				else:
+					moving_map[i, j] = img[i, j]
+		
 		# Update avg_map
-		# TODO
+		self.avg_map = self.avg_map * self.alpha + img * (1 -self.alpha)
 
-		return motion_map
+		return moving_map
 
 
 # ------------------ #
