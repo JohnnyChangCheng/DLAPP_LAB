@@ -21,15 +21,26 @@ def histEq(gray):
     hist = cv2.calcHist([gray], [0], None, [256], [0, 256]).reshape(-1)
     hist = hist / gray.size
     print(hist)
-
+    print("---Normal---\n")
+    
     # Convert the histogram to Cumulative Distribution Function
     # TODO
+    cdf = hist.cumsum()
+    print(cdf)
+    print("---Cumulative---\n")
 
     # Build a lookup table mapping the pixel values [0, 255] to their new grayscale value
     # TODO
-
+    hist_table = np.zeros(256, dtype='uint8') 
+    for i in range(0, 256):
+        hist_table[i] = int(cdf[i] * 255.0)
+    
     # Apply histogram equalization using the lookup table
     # TODO
+    img_h = np.zeros(gray.shape, np.uint8)
+    for i in range(0, gray.shape[0]):
+        for j in range(0, gray.shape[1]):
+            img_h[i, j] = hist_table[gray[i, j]]
 
     return img_h
 
