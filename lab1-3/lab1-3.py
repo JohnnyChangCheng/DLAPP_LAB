@@ -76,10 +76,10 @@ def edgeSharpen(img, amount = 1):
 
     denoise = cv2.GaussianBlur(gray,(3,3),0)
     kernel_delta = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-    pedding_delta = cv2.copyMakeBorder(img_edge,1,1,1,1,cv2.BORDER_REPLICATE)
-    img_delta = cv2.filter2D(pedding,-1,kernel = kernel_delta)
+    pedding_delta = cv2.copyMakeBorder(denoise,1,1,1,1,cv2.BORDER_REPLICATE)
+    img_delta = cv2.filter2D(pedding_delta,-1,kernel = kernel_delta)
 
-    return img_edge, img_delta, unsharp_mask(img_edge)
+    return img_edge, img_delta, unsharp_mask(gray)
 
 # ------------------ #
 #       Denoise      #
