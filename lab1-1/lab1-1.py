@@ -5,7 +5,7 @@ import numpy as np
 def splitRGB(img):
 	B_map, G_map, R_map= cv2.split(img)
 
-	return R_map, G_map, B_map
+	return cv2.merge([zero_channel, zero_channel, R_map]), cv2.merge([zero_channel, G_map, zero_channel]), cv2.merge([B_map, zero_channel, zero_channel])
 
 def splitHSV(img):
 	hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -108,13 +108,12 @@ R_map, G_map, B_map = splitRGB(img)
 H_map, S_map, V_map = splitHSV(img)
 
 
-cv2.imwrite('data_R.png', cv2.merge([zero_channel, zero_channel, R_map]))
-cv2.imwrite('data_G.png', cv2.merge([zero_channel, G_map, zero_channel]))
-cv2.imwrite('data_B.png', cv2.merge([B_map, zero_channel, zero_channel]))
-cv2.imwrite('data_H.png', cv2.merge([H_map, zero_channel, zero_channel]))
-cv2.imwrite('data_S.png', cv2.merge([zero_channel, S_map, zero_channel]))
-cv2.imwrite('data_V.png', cv2.merge([zero_channel, zero_channel, V_map]))
-
+cv2.imwrite('data_R.png', R_map)
+cv2.imwrite('data_G.png', G_map)
+cv2.imwrite('data_B.png', B_map)
+cv2.imwrite('data_H.png', H_map)
+cv2.imwrite('data_S.png', S_map)
+cv2.imwrite('data_V.png', V_map)
 
 # ------------------ #
 #   Interpolation    #
