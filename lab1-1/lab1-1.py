@@ -4,6 +4,7 @@ import numpy as np
 
 def splitRGB(img):
 	B_map, G_map, R_map= cv2.split(img)
+	zero_channel = np.zeros(img.shape[:2], dtype = "uint8")
 
 	return cv2.merge([zero_channel, zero_channel, R_map]), cv2.merge([zero_channel, G_map, zero_channel]), cv2.merge([B_map, zero_channel, zero_channel])
 
@@ -91,81 +92,131 @@ class MotionDetect(object):
 
 		return moving_map
 
+class BonusMotionDetect(MotionDetect):
+	def __init__(self, shape):
+		self.shape = shape
+		self.avg_map = np.zeros((self.shape[0], self.shape[1]),  np.uint8)
+		self.alpha = 0.8 # you can ajust your value
+		self.threshold = 40 # you can ajust your value
 
-# ------------------ #
-#     RGB & HSV      #
-# ------------------ #
-name = "../data.png"
-img = cv2.imread(name)
-if img is not None:
-	print("Reading {} success. Image shape {}".format(name, img.shape))
-else:
-	print("Faild to read {}.".format(name))
+		print("MotionDetect init with shape {}".format(self.shape))
 
-zero_channel = np.zeros(img.shape[:2], dtype = "uint8")
+	def getMotion(self, img):
+		
+		# To gray 
+		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-R_map, G_map, B_map = splitRGB(img)
-H_map, S_map, V_map = splitHSV(img)
+		# Gaussian Blur
+		gray = cv2.GaussianBlur(gray, (3, 3), 0)
 
+		gray = cv2.erode(gray, (3, 3), iterations = 1)
+		# Extract motion part (hint: motion part mask = difference between image and avg > threshold)
+		moving = cv2.absdiff(self.avg_map.astype(np.uint8), gray.astype(np.uint8))
 
-cv2.imwrite('data_R.png', R_map)
-cv2.imwrite('data_G.png', G_map)
-cv2.imwrite('data_B.png', B_map)
-cv2.imwrite('data_H.png', H_map)
-cv2.imwrite('data_S.png', S_map)
-cv2.imwrite('data_V.png', V_map)
+		# Mask out unmotion part (hint: set the unmotion part to 0 with mask)
+		moving_map = np.zeros((gray.shape[0], gray.shape[1]), np.uint8)
 
-# ------------------ #
-#   Interpolation    #
-# ------------------ #
-name = "../data.png"
-img = cv2.imread(name)
-if img is not None:
-	print("Reading {} success. Image shape {}".format(name, img.shape))
-else:
-	print("Faild to read {}.".format(name))
+		height = gray.shape[0]
+		width = gray.shape[1]
 
-height, width, channel = img.shape
-img_big = resize(img, 2)
-img_small = resize(img, 0.5)
-img_big_cv = cv2.resize(img, (width*2, height*2))
-img_small_cv = cv2.resize(img, (width//2, height//2))
+		for i in range(0, height):
+			for j in range(0, width):
+				if moving[i, j].sum() < self.threshold:
+					moving_map[i, j] = 0
+				else:
+					moving_map[i, j] = gray[i, j]
+		
+		moving_map=cv2.dilate(moving_map, (3, 3), iterations = 1)
 
-cv2.imwrite('data_2x.png', img_big)
-cv2.imwrite('data_0.5x.png', img_small)
-cv2.imwrite('data_2x_cv.png', img_big_cv)
-cv2.imwrite('data_0.5x_cv.png', img_small_cv)
+		# Update avg_map
+		self.avg_map = self.avg_map * self.alpha + gray * (1 -self.alpha)
 
-# ------------------ #
-#  Video Read/Write  #
-# ------------------ #
-name = "../data.mp4"
-# Input reader
-cap = cv2.VideoCapture(name)
-fps = cap.get(cv2.CAP_PROP_FPS)
-h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-
-# Output writer
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output1.avi', fourcc, fps, (w, h), True)
-
-# Motion detector
-mt = MotionDetect(shape=(h,w,3))
-
-# Read video frame by frame
-while True:
-	# Get 1 frame
-	success, frame = cap.read()
-
-	if success:
-		motion_map = mt.getMotion(frame)
-
-		# Write 1 frame to output video
-		out.write(motion_map)
+		return moving_map
+def rgb_hsv():
+	# ------------------ #
+	#     RGB & HSV      #
+	# ------------------ #
+	name = "../data.png"
+	img = cv2.imread(name)
+	if img is not None:
+		print("Reading {} success. Image shape {}".format(name, img.shape))
 	else:
-		break
+		print("Faild to read {}.".format(name))
+	
+	R_map, G_map, B_map = splitRGB(img)
+	H_map, S_map, V_map = splitHSV(img)
+	
+	
+	cv2.imwrite('data_R.png', R_map)
+	cv2.imwrite('data_G.png', G_map)
+	cv2.imwrite('data_B.png', B_map)
+	cv2.imwrite('data_H.png', H_map)
+	cv2.imwrite('data_S.png', S_map)
+	cv2.imwrite('data_V.png', V_map)
 
-# Release resource
-cap.release()
-out.release()
+def interpolation():
+	# ------------------ #
+	#   Interpolation    #
+	# ------------------ #
+	name = "../data.png"
+	img = cv2.imread(name)
+	if img is not None:
+		print("Reading {} success. Image shape {}".format(name, img.shape))
+	else:
+		print("Faild to read {}.".format(name))
+
+	height, width, channel = img.shape
+	img_big = resize(img, 2)
+	img_small = resize(img, 0.5)
+	img_big_cv = cv2.resize(img, (width*2, height*2))
+	img_small_cv = cv2.resize(img, (width//2, height//2))
+
+	cv2.imwrite('data_2x.png', img_big)
+	cv2.imwrite('data_0.5x.png', img_small)
+	cv2.imwrite('data_2x_cv.png', img_big_cv)
+	cv2.imwrite('data_0.5x_cv.png', img_small_cv)
+
+def motion():
+	# ------------------ #
+	#  Video Read/Write  #
+	# ------------------ #
+	name = "../data.mp4"
+	# Input reader
+	cap = cv2.VideoCapture(name)
+	fps = cap.get(cv2.CAP_PROP_FPS)
+	h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+	w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+	# Output writer
+	fourcc = cv2.VideoWriter_fourcc(*'XVID')
+	out = cv2.VideoWriter('output1.avi', fourcc, fps, (w, h), True)
+	bout = cv2.VideoWriter('output2.avi', fourcc, fps, (w, h), False) 
+
+	# Motion detector
+	mt = MotionDetect(shape=(h,w,3))
+	bmt = BonusMotionDetect(shape=(h,w))
+
+	# Read video frame by frame
+	while True:
+		# Get 1 frame
+		success, frame = cap.read()
+
+		if success:
+			motion_map = mt.getMotion(frame)
+			bonus_motion_map = bmt.getMotion(frame)
+
+			# Write 1 frame to output video
+			out.write(motion_map)
+			bout.write(bonus_motion_map)
+		else:
+			break
+
+	# Release resource
+	cap.release()
+	out.release()
+	bout.release()
+
+if __name__ == '__main__':
+	rgb_hsv()
+	interpolation()
+	motion()
