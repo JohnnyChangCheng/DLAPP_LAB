@@ -6,6 +6,7 @@ import torch.optim as optim
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import predata
 
 # ============================= #
 # you can define your own model #
@@ -27,7 +28,9 @@ class LeNet(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 29 * 29, 120)
+        self.dropout = nn.Dropout(0.4)
         self.fc2 = nn.Linear(120, 84)
+        self.dropout2 = nn.Dropout(0.2)
         self.fc3 = nn.Linear(84, 10)
         self.relu = nn.ReLU()
         
@@ -37,7 +40,9 @@ class LeNet(nn.Module):
         x = self.pool(self.relu(self.conv2(x)))
         x = x.view(-1, 16 * 29 * 29)
         x = self.relu(self.fc1(x))
+        x = self.dropout(x)
         x = self.relu(self.fc2(x))
+        x = self.dropout2(x)
         x = self.fc3(x)
         return x
 
@@ -82,8 +87,9 @@ class ChineseOCR(object):
 
         # The transform function for train data
         transform_train = transforms.Compose([
-            transforms.RandomCrop(128, padding=4),
-            transforms.RandomHorizontalFlip(),
+            transforms.RandomOrder([transforms.RandomCrop(128, padding=4),
+                                                    transforms.RandomHorizontalFlip(),
+                                                    ]),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (1, 1, 1)),
             # you can apply more augment function
@@ -98,8 +104,8 @@ class ChineseOCR(object):
 
 
         # TODO
-        # self.trainset = torchvision.datasets.ImageFolder(...)
-        # self.testset = torchvision.datasets.ImageFolder(...)
+        self.trainset = torchvision.datasets.ImageFolder("dataset", transform= transform_train)
+        self.testset = torchvision.datasets.ImageFolder("dataset", transform= transform_train)
 
         self.trainloader = torch.utils.data.DataLoader(self.trainset, batch_size=self.batch_size, shuffle=True)
         self.testloader = torch.utils.data.DataLoader(self.testset, batch_size=self.batch_size, shuffle=False)
@@ -200,7 +206,7 @@ class ChineseOCR(object):
                         print(c_eachlabel[i].item())
                     class_total[cur_label] += 1
 
-        print('Total accuracy is: {:4f}% and loss is: {:3.3f}'.format(100 * correct/len(self.testset), running_loss/iter_count))
+        #print('Total accuracy is: {:4f}% and loss is: {:3.3f}'.format(100 * correct/len(self.testset), running_loss/iter_count))
         print('For each class in dataset:')
         for i in range(len(self.classes)):
             print('Accruacy for {:18s}: {:4.2f}%'.format(self.classes[i], 100 * class_correct[i]/class_total[i]))
@@ -244,12 +250,11 @@ class ChineseOCR(object):
         return
 
     def showWeights(self):
-        # TODO
-        # w_conv1 = ...
-        # w_conv2 = ...
-        # w_fc1 = ...
-        # w_fc2 = ...
-        # w_fc3 = ...
+        w_conv1 = self.net.conv1.weight.cpu().detach().numpy().flatten()
+        w_conv2 = self.net.conv2.weight.cpu().detach().numpy().flatten()
+        w_fc1 = self.net.fc1.weight.cpu().detach().numpy().flatten()
+        w_fc2 = self.net.fc2.weight.cpu().detach().numpy().flatten()
+        w_fc3 = self.net.fc3.weight.cpu().detach().numpy().flatten()
 
         plt.figure(figsize=(24, 6))
         plt.subplot(1,5,1)
@@ -276,4 +281,5 @@ class ChineseOCR(object):
 
 if __name__ == '__main__':
     # you can adjust your hyperperamers
-    ocr = ChineseOCR('./data', 75, 32, 0.001)
+    predata.prepare_data()
+    ocr = ChineseOCR('./data', 90, 40, 0.001)
