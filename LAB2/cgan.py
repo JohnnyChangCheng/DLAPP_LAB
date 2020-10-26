@@ -2,7 +2,7 @@ import argparse
 import os
 import numpy as np
 import math
-
+import shutil
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
 
@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-epochs = 600
+epochs = 400
 lr = 0.0002
 b1 = 0.5
 b2 = 0.999
@@ -23,7 +23,7 @@ latent_dim = 100
 n_classes = 10
 img_size = 128
 channels = 1
-sample_interval = 200
+sample_interval = 4000
 img_shape = (channels, img_size, img_size)
 
 cuda = True if torch.cuda.is_available() else False
@@ -96,8 +96,7 @@ def sample_image(n_row, batches_done):
     labels = np.array([num for _ in range(n_row) for num in range(n_row)])
     labels = Variable(LongTensor(labels))
     gen_imgs = generator(z, labels)
-    if not os.path.isdir("images"):
-        os.makedirs("images", exist_ok=True)
+
     save_image(gen_imgs.data, "images/%d.png" % batches_done, nrow=n_row, normalize=True)
 
 
@@ -105,6 +104,9 @@ def sample_image(n_row, batches_done):
 
 def train_CGAN( ):
 
+    if os.path.isdir("images"):
+        shutil.rmtree("images")
+    os.makedirs("images", exist_ok=True)
     # Loss functions
     adversarial_loss = torch.nn.MSELoss()
 
@@ -196,9 +198,9 @@ def train_CGAN( ):
 
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-                % (epoch, 600, i, len(dataloader), d_loss.item(), g_loss.item())
+                % (epoch, epochs, i, len(dataloader), d_loss.item(), g_loss.item())
             )
 
             batches_done = epoch * len(dataloader) + i
-            if batches_done % sample_interval == 0 and batches_done > 4000:
+            if batches_done % sample_interval == 0 and batches_done > 8000:
                 sample_image(n_row=10, batches_done=batches_done)

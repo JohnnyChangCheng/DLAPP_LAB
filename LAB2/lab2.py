@@ -26,6 +26,8 @@ class LeNet(nn.Module):
         print('Building model...')
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
+        self.batch = nn.BatchNorm2d(6)
+        self.batch2 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 29 * 29, 120)
         self.dropout = nn.Dropout(0.4)
@@ -36,8 +38,8 @@ class LeNet(nn.Module):
         
     # connect these layers
     def forward(self, x):
-        x = self.pool(self.relu(self.conv1(x)))
-        x = self.pool(self.relu(self.conv2(x)))
+        x = self.pool(self.relu(self.batch(self.conv1(x))))
+        x = self.pool(self.relu(self.batch2(self.conv2(x))))
         x = x.view(-1, 16 * 29 * 29)
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
@@ -282,4 +284,4 @@ class ChineseOCR(object):
 if __name__ == '__main__':
     # you can adjust your hyperperamers
     predata.prepare_data()
-    ocr = ChineseOCR('./data', 90, 40, 0.001)
+    ocr = ChineseOCR('./data', 100, 40, 0.001)
