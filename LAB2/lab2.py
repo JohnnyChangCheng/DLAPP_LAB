@@ -7,6 +7,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import predata
+import sys
 
 # ============================= #
 # you can define your own model #
@@ -32,7 +33,7 @@ class LeNet(nn.Module):
         self.fc1 = nn.Linear(16 * 29 * 29, 120)
         self.dropout = nn.Dropout(0.4)
         self.fc2 = nn.Linear(120, 84)
-        self.dropout2 = nn.Dropout(0.2)
+        self.dropout2 = nn.Dropout(0.4)
         self.fc3 = nn.Linear(84, 10)
         self.relu = nn.ReLU()
         
@@ -50,7 +51,7 @@ class LeNet(nn.Module):
 
 class ChineseOCR(object):
     """docstring for ChineseOCR"""
-    def __init__(self, in_path, epoch, batch_size, lr):
+    def __init__(self, in_path, epoch, batch_size, lr, train_on):
         super(ChineseOCR, self).__init__()
         self.in_path = in_path
         self.epoch = epoch
@@ -63,9 +64,12 @@ class ChineseOCR(object):
         self.checkdevice()
         self.prepareData()
         self.getModel()
-        self.train_acc = self.train()
-        self.saveModel()
-        self.test()
+        if train_on:
+            self.train_acc = self.train()
+            self.saveModel()
+        else:
+            self.loadModel('model.pt')
+            self.test()
 
         self.showWeights()
 
@@ -283,5 +287,9 @@ class ChineseOCR(object):
 
 if __name__ == '__main__':
     # you can adjust your hyperperamers
-    predata.prepare_data()
-    ocr = ChineseOCR('./data', 100, 40, 0.001)
+    if len(sys.argv) > 1 and sys.argv[1] == "eval":
+        print("Evaluation only")
+        ocr = ChineseOCR('./data', 100, 40, 0.001, False)
+    else:
+        predata.prepare_data()
+        ocr = ChineseOCR('./data', 100, 40, 0.001, True)
