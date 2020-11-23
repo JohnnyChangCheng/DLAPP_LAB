@@ -12,8 +12,8 @@ from keras import optimizers
 import tensorflow as tf
 import random
 import shutil
-BATCH_SIZE=3
-HEIGHT=288
+BATCH_SIZE=2
+HEIGHT=288			
 WIDTH=512
 mag = 1
 sigma = 2.5
@@ -49,62 +49,55 @@ for game in game_list:
 	for i in range(len(train_path)):
 		train_path[i] = train_path[i][len(os.path.join('train_data', game, 'frame')) + 1:]
 	for p in train_path:
-		try:
-			labelPath = os.path.join('train_data',game, 'ball_trajectory', p + '_ball.csv')
-			data = pd.read_csv(labelPath)
-			no = data['Frame'].values
-			v = data['Visibility'].values
-			x = data['X'].values
-			y = data['Y'].values
-			num = no.shape[0]
-			r = os.path.join('train_data', game, 'frame', p)
-			x_data_tmp = []
-			y_data_tmp = []
-			for i in range(num):
-				unit = []
-				for j in range(1):
-					target=str(no[i+j])+'.png'
-					png_path = os.path.join(r, target)
-					a = load_img(png_path,color_mode="grayscale")
-					a = np.moveaxis(img_to_array(a.resize(size=(WIDTH, HEIGHT))), -1, 0)
-					unit.append(a[0])
-					#unit.append(a[1])
-					#unit.append(a[2])
-					del a
-				x_data_tmp.append(unit)
-				del unit
+		labelPath = os.path.join('train_data',game, 'ball_trajectory', p + '_ball.csv')
+		data = pd.read_csv(labelPath)
+		no = data['Frame'].values
+		v = data['Visibility'].values
+		x = data['X'].values
+		y = data['Y'].values
+		num = no.shape[0]
+		r = os.path.join('train_data', game, 'frame', p)
+		x_data_tmp = []
+		y_data_tmp = []
+		for i in range(num):
+			unit = []
+			for j in range(1):
+				target=str(no[i+j])+'.png'
+				png_path = os.path.join(r, target)
+				a = load_img(png_path)
+				a = np.moveaxis(img_to_array(a.resize(size=(WIDTH, HEIGHT))), -1, 0)
+				unit.append(a[0])
+				unit.append(a[1])
+				unit.append(a[2])
+				del a
+			x_data_tmp.append(unit)
+			del unit
 
-				unit = []
-				for j in range(1):
-					if v[i+j] == 0:
-						unit.append(genHeatMap(WIDTH, HEIGHT, -1, -1, sigma, mag))
-					else:
-						unit.append(genHeatMap(WIDTH, HEIGHT, int(x[i+j]/ratio), int(y[i+j]/ratio), sigma, mag))
-				y_data_tmp.append(unit) 
-				del unit
+			unit = []
+			for j in range(1):
+				if v[i+j] == 0:
+					unit.append(genHeatMap(WIDTH, HEIGHT, -1, -1, sigma, mag))
+				else:
+					unit.append(genHeatMap(WIDTH, HEIGHT, int(x[i+j]/ratio), int(y[i+j]/ratio), sigma, mag))
+			y_data_tmp.append(unit) 
+			del unit
 
-			x_data_tmp2 = np.asarray(x_data_tmp)
-			del x_data_tmp
-			x_data = x_data_tmp2.astype('float32')
-			del x_data_tmp2
-			x_data=(x_data/255)
+		x_data_tmp2 = np.asarray(x_data_tmp)
+		del x_data_tmp
+		x_data = x_data_tmp2.astype('float32')
+		del x_data_tmp2
+		x_data=(x_data/255)
 
-			y_data=np.asarray(y_data_tmp)
-			del y_data_tmp
-			np.save(os.path.join(dataDir, 'x_data_' + str(count) + '.npy'), x_data)
-			np.save(os.path.join(dataDir, 'y_data_' + str(count) + '.npy'), y_data)
-			print('============================')
-			print(count)
-			print(game, p)
-			print(x_data.shape)
-			print(y_data.shape)
-			print('============================')
-			del x_data
-			del y_data
-			count += 1
-		except Exception:
-			pass
-
-
-
-
+		y_data=np.asarray(y_data_tmp)
+		del y_data_tmp
+		np.save(os.path.join(dataDir, 'x_data_' + str(count) + '.npy'), x_data)
+		np.save(os.path.join(dataDir, 'y_data_' + str(count) + '.npy'), y_data)
+		print('============================')
+		print(count)
+		print(game, p)
+		print(x_data.shape)
+		print(y_data.shape)
+		print('============================')
+		del x_data
+		del y_data
+		count += 1

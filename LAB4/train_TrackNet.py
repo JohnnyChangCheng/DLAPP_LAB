@@ -13,11 +13,12 @@ import keras.backend as K
 from keras import optimizers
 from keras.activations import *
 import tensorflow as tf
+from keras import backend as K
+K.clear_session()
 import cv2
 import math
-
-BATCH_SIZE=2
-HEIGHT=288
+BATCH_SIZE=1
+HEIGHT=288			
 WIDTH=512
 mag = 1
 sigma = 2.5
@@ -90,6 +91,7 @@ def evaluation(y_pred, y_true, tol):
 		recall = 0
 	return (accuracy, precision, recall)
 
+
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 try:
@@ -151,8 +153,8 @@ def custom_loss(y_true, y_pred):
 #Training for the first time
 if paramCount['load_weights'] == 0:
 	model=TrackNet(HEIGHT, WIDTH)
-	Nadam = optimizers.Nadam(lr=1.0)
-	model.compile(loss=['binary_crossentropy'], optimizer=Nadam, metrics=['accuracy']) #loss = my_loss ['binary_crossentropy']
+	ADADELTA = optimizers.Adadelta(lr=1.0)
+	model.compile(loss=['binary_crossentropy'], optimizer=ADADELTA, metrics=['accuracy']) #loss = my_loss ['binary_crossentropy']
 #Retraining
 else:
 	#if you have own loss function 
@@ -171,39 +173,39 @@ for i in range(epochs):
 		x_train = np.load(os.path.abspath(os.path.join(dataDir, 'x_data_' + str(j) + '.npy')))
 		y_train = np.load(os.path.abspath(os.path.join(dataDir, 'y_data_' + str(j) + '.npy')))
 		#y_train = y_train.reshape(y_train.shape[0],1,y_train.shape[1], y_train.shape[2])
-		print(type(x_train))
 		model.fit(x_train, y_train, batch_size=BATCH_SIZE, epochs=1)
 		del x_train
 		del y_train
 	
 	#Save intermediate weights during training & Show the outcome of training data so long
 	if (i+1) % 3 == 0:
-		model.save(save_weights + '_' + str(i + 1))
-		TP = TN = FP1 = FP2 = FN = 0
-		for j in idx:
-			x_train = np.load(os.path.abspath(os.path.join(dataDir, 'x_data_' + str(j) + '.npy')))
-			y_train = np.load(os.path.abspath(os.path.join(dataDir, 'y_data_' + str(j) + '.npy')))
-			#y_train = y_train.reshape(y_train.shape[0],1,y_train.shape[1], y_train.shape[2])
-			y_pred = model.predict(x_train, batch_size=BATCH_SIZE)
-			y_pred = y_pred > 0.5
-			y_pred = y_pred.astype('float32')
-			#print(y_pred.shape)
-			#print(y_train.shape)
-			(tp, tn, fp1, fp2, fn) = outcome(y_pred, y_train, tol)
-			TP += tp
-			TN += tn
-			FP1 += fp1
-			FP2 += fp2
-			FN += fn
-			del x_train
-			del y_train
-			del y_pred
-		print("Outcome of training data of epoch " + str(i+1) + ":")
-		print("Number of true positive:", TP)
-		print("Number of true negative:", TN)
-		print("Number of false positive FP1:", FP1)
-		print("Number of false positive FP2:", FP2)
-		print("Number of false negative:", FN)
+		model.save(save_weights + '_' + str(i + 1)) 
+		#TP = TN = FP1 = FP2 = FN = 0
+		#for j in idx:
+		#	x_train = np.load(os.path.abspath(os.path.join(dataDir, 'x_data_' + str(j) + '.npy')))
+		#	y_train = np.load(os.path.abspath(os.path.join(dataDir, 'y_data_' + str(j) + '.npy')))
+		#	#y_train = y_train.reshape(y_train.shape[0],1,y_train.shape[1], y_train.shape[2])
+		#	y_pred = model.predict(x_train, batch_size=BATCH_SIZE)
+		#	y_pred = y_pred > 0.5
+		#	y_pred = y_pred.astype('float32')
+		#	#print(y_pred.shape)
+		#	#print(y_train.shape)
+		#	(tp, tn, fp1, fp2, fn) = outcome(y_pred, y_train, tol)
+		#	TP += tp
+		#	TN += tn
+		#	FP1 += fp1
+		#	FP2 += fp2
+		#	FN += fn
+		#	del x_train
+		#	del y_train
+		#	del y_pred
+		#print("Outcome of training data of epoch " + str(i+1) + ":")
+		#print("Number of true positive:", TP)
+		#print("Number of true negative:", TN)
+		#print("Number of false positive FP1:", FP1)
+		#print("Number of false positive FP2:", FP2)
+		#print("Number of false negative:", FN)
+	
 			
 		
 

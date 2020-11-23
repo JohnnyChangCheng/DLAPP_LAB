@@ -52,7 +52,7 @@ the layer you want to imply short connection(32*32*256),you shold upsampling(64*
 
 def TrackNet( input_height, input_width ): #input_height = 288, input_width = 512
 
-	imgs_input = Input(shape=(1,input_height,input_width)) #input channel --> data_format='channels_first' 
+	imgs_input = Input(shape=(3,input_height,input_width)) #input channel --> data_format='channels_first' 
 
 	#Layer1
 	x = Conv2D(32, (3, 3), kernel_initializer='random_uniform', padding='same', data_format='channels_first' )(imgs_input)
@@ -63,6 +63,8 @@ def TrackNet( input_height, input_width ): #input_height = 288, input_width = 51
 	x = Conv2D(32, (3, 3), kernel_initializer='random_uniform', padding='same', data_format='channels_first' )(x)
 	x = ( Activation('relu'))(x)
 	x = ( BatchNormalization())(x)
+	drop0 = Dropout(0.5)(x)
+	x = drop0
 
 	#Layer3
 	x = MaxPooling2D((2, 2), strides=(2, 2), data_format='channels_first' )(x)
@@ -76,7 +78,9 @@ def TrackNet( input_height, input_width ): #input_height = 288, input_width = 51
 	x = Conv2D(64, (3, 3), kernel_initializer='random_uniform', padding='same', data_format='channels_first' )(x)
 	x = ( Activation('relu'))(x)
 	x = ( BatchNormalization())(x)
-
+	drop1 = Dropout(0.5)(x)
+	x = drop1
+	
 	#Layer6
 	x = MaxPooling2D((2, 2), strides=(2, 2), data_format='channels_first' )(x)
 
@@ -94,6 +98,8 @@ def TrackNet( input_height, input_width ): #input_height = 288, input_width = 51
 	x = Conv2D(128, (3, 3), kernel_initializer='random_uniform', padding='same', data_format='channels_first' )(x)
 	x = ( Activation('relu'))(x)
 	x = ( BatchNormalization())(x)
+	drop2 = Dropout(0.5)(x)
+	x = drop2
 
 	#Layer10
 	x = MaxPooling2D((2, 2), strides=(2, 2), data_format='channels_first' )(x)
@@ -114,12 +120,14 @@ def TrackNet( input_height, input_width ): #input_height = 288, input_width = 51
 	x = ( BatchNormalization())(x)
 
 	#Layer14
-	x = UpSampling2D( (2,2), data_format='channels_first', interpolation="bilinear")(x)
+	x = UpSampling2D((2,2), data_format='channels_first')(x)
 
 	#Layer15
-	x = ( Conv2D(128, (3, 3), kernel_initializer='random_uniform', padding='same', data_format='channels_first'))(x)
+	x = ( Conv2D(128, (2, 2), kernel_initializer='random_uniform', padding='same', data_format='channels_first'))(x)
 	x = ( Activation('relu'))(x)
 	x = ( BatchNormalization())(x)
+
+	x = concatenate([drop2,x], axis = 1)
 
 	#Layer16
 	x = ( Conv2D(128, (3, 3), kernel_initializer='random_uniform', padding='same', data_format='channels_first'))(x)
@@ -132,12 +140,14 @@ def TrackNet( input_height, input_width ): #input_height = 288, input_width = 51
 	x = ( BatchNormalization())(x)
 	
 	#Layer18
-	x = UpSampling2D( (2,2), data_format='channels_first', interpolation="bilinear")(x)
+	x = UpSampling2D((2,2), data_format='channels_first')(x)
 
 	#Layer19
-	x = ( Conv2D(64 , (3, 3), kernel_initializer='random_uniform', padding='same' , data_format='channels_first' ))(x)
+	x = ( Conv2D(64 , (2, 2), kernel_initializer='random_uniform', padding='same' , data_format='channels_first' ))(x)
 	x = ( Activation('relu'))(x)
 	x = ( BatchNormalization())(x)
+
+	x = concatenate([drop1,x], axis = 1)
 
 	#Layer20
 	x = ( Conv2D(64 , (3, 3), kernel_initializer='random_uniform', padding='same' , data_format='channels_first' ))(x)
@@ -145,12 +155,14 @@ def TrackNet( input_height, input_width ): #input_height = 288, input_width = 51
 	x = ( BatchNormalization())(x)
 
 	#Layer21
-	x = UpSampling2D( (2,2), data_format='channels_first', interpolation="bilinear")(x)
+	x = UpSampling2D( (2,2), data_format='channels_first')(x)
 
 	#Layer22
 	x = ( Conv2D(32 , (3, 3), kernel_initializer='random_uniform', padding='same'  , data_format='channels_first' ))(x)
 	x = ( Activation('relu'))(x)
 	x = ( BatchNormalization())(x)
+
+	x = concatenate([drop0,x], axis = 1)
 
 	#Layer23
 	x = ( Conv2D(32 , (3, 3), kernel_initializer='random_uniform', padding='same'  , data_format='channels_first' ))(x)
